@@ -2,13 +2,13 @@ FROM quay.io/centos/centos:stream8
 
 ARG awscli_v=2.6.1
 ARG awsvault_v=6.6.0
-ARG docker_v=20.10.9
+ARG docker_v=20.10.14
 ARG terraform_v=1.1.9
 ARG terraformdocs_v=0.16.0
 ARG tflint_v=0.35.0
 ARG yq_v=4.25.1
 
-ADD ansible_collection_requirements.yml plugins.tf versions.tf ./
+ADD ansible_collection_requirements.yml plugins.tf tests.sh versions.tf ./
 
 RUN dnf -y update && \
     dnf -y install glibc-langpack-en epel-release unzip curl bind-utils telnet bash-completion which sudo vim xz iputils && \
@@ -32,8 +32,8 @@ RUN curl -s "https://releases.hashicorp.com/terraform/${terraform_v}/terraform_$
     mv terraform /usr/local/bin/terraform && \
     rm -rf terraform.zip
 
-RUN curl -sL "https://github.com/segmentio/terraform-docs/releases/download/v${terraformdocs_v}/terraform-docs-v${terraformdocs_v}-linux-amd64" -o "/usr/local/bin/terraform-docs" && \
-    chmod +x /usr/local/bin/terraform-docs
+RUN curl -sL "https://github.com/segmentio/terraform-docs/releases/download/v${terraformdocs_v}/terraform-docs-v${terraformdocs_v}-linux-amd64.tar.gz" | \
+    tar xvzf - -C /usr/local/bin terraform-docs
 
 RUN curl -sL "https://github.com/terraform-linters/tflint/releases/download/v${tflint_v}/tflint_linux_amd64.zip" -o "tflint.zip" && \
     unzip tflint.zip && \

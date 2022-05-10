@@ -1,21 +1,28 @@
----
 version: 2.1
+
+common_defaults: &common_defaults
+  docker:
+    - image: docker:20.10.14
 
 commands:
   build_and_test:
     steps:
       - checkout
+      - setup_remote_docker
+
       - run:
           name: Build Docker image
           command: |
             docker build -t ${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10} .
+
       - run:
           name: Test Docker image
           command: |
             docker run --rm \
-              -v "$(pwd)/tests.sh":/root/tests.sh \
+              -v "$(pwd)/tests.sh":/tmp/tests.sh \
               "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}" \
-              ./tests.sh
+              /bin/bash tests.sh
+
       - run:
           name: Create Docker image archive
           command: |
@@ -24,15 +31,13 @@ commands:
               "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}"
 
       - persist_to_workspace:
-          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is
-          # taken to be the root directory of the workspace.
           root: /tmp
-          # Must be relative path from root
           paths:
             - artifacts/*
 
   publish:
     steps:
+      - setup_remote_docker
       - attach_workspace:
           at: ./
 
@@ -50,7 +55,7 @@ commands:
       - run:
           name: Login to DockerHUB
           command: |
-            echo "${DEPLOY_BASE_DOCKER_PASS}" | docker login --username ${DEPLOY_BASE_DOCKER_USER} --password-stdin
+            echo "${DEPLOY_BASE_DOCKER_PASS}" | docker login --username ${DEPLOY_BASE_DOCKER_ACCOUNT_ID} --password-stdin
 
       - run:
           name: Push images to DockerHUB
@@ -58,28 +63,28 @@ commands:
             docker push "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}"
             docker push "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:latest"
 
-
 jobs:
   build_and_test_docker_image:
-    machine: true
+    <<: *common_defaults
     steps:
       - build_and_test
   publish_docker_image:
-    machine: true
+    <<: *common_defaults
     steps:
       - publish
 
 workflows:
-  jobs:
-    - build_and_test_docker_image
-    - hold:
-        type: approval
-        requires:
-          - build_and_test_docker_image
-        filters:
-          branches:
-            only:
-              - master
-    - publish_docker_image:
-        requires:
-          - hold
+  build-and-publish:
+    jobs:
+      - build_and_test_docker_image
+      - hold:
+          type: approval
+          requires:
+            - build_and_test_docker_image
+          filters:
+            branches:
+              only:
+                - master
+      - publish_docker_image:
+          requires:
+            - hold
