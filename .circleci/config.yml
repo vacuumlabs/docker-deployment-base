@@ -1,0 +1,85 @@
+---
+version: 2.1
+
+commands:
+  build_and_test:
+    steps:
+      - checkout
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t ${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10} .
+      - run:
+          name: Test Docker image
+          command: |
+            docker run --rm \
+              -v "$(pwd)/tests.sh":/root/tests.sh \
+              "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}" \
+              ./tests.sh
+      - run:
+          name: Create Docker image archive
+          command: |
+            mkdir /tmp/artifacts
+            docker image save -o "/tmp/artifacts/${DEPLOY_BASE_DOCKER_ACCOUNT_ID}-deployment-base-${CIRCLE_SHA1:0:10}.tar" \
+              "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}"
+
+      - persist_to_workspace:
+          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is
+          # taken to be the root directory of the workspace.
+          root: /tmp
+          # Must be relative path from root
+          paths:
+            - artifacts/*
+
+  publish:
+    steps:
+      - attach_workspace:
+          at: ./
+
+      - run:
+          name: Load Docker image from build_and_test workspace
+          command: |
+            docker image load -i "artifacts/${DEPLOY_BASE_DOCKER_ACCOUNT_ID}-deployment-base-${CIRCLE_SHA1:0:10}.tar"
+
+      - run:
+          name: Tag Docker image as latest
+          command: |
+            docker tag "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}" \
+              "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:latest"
+
+      - run:
+          name: Login to DockerHUB
+          command: |
+            echo "${DEPLOY_BASE_DOCKER_PASS}" | docker login --username ${DEPLOY_BASE_DOCKER_USER} --password-stdin
+
+      - run:
+          name: Push images to DockerHUB
+          command: |
+            docker push "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:${CIRCLE_SHA1:0:10}"
+            docker push "${DEPLOY_BASE_DOCKER_ACCOUNT_ID}/deployment-base:latest"
+
+
+jobs:
+  build_and_test_docker_image:
+    machine: true
+    steps:
+      - build_and_test
+  publish_docker_image:
+    machine: true
+    steps:
+      - publish
+
+workflows:
+  jobs:
+    - build_and_test_docker_image
+    - hold:
+        type: approval
+        requires:
+          - build_and_test_docker_image
+        filters:
+          branches:
+            only:
+              - master
+    - publish_docker_image:
+        requires:
+          - hold
