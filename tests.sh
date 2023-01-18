@@ -35,13 +35,14 @@ echo "*** pre-commit, tflint, terraform-docs ***"
 echo "***           and terraform            ***"
 echo "******************************************"
 cat > main.tf << EOF
+# tflint-ignore: terraform_required_providers
 resource "null_resource" "test" {
 }
 EOF
 cat > .pre-commit-config.yaml << EOF
 repos:
 - repo: https://github.com/antonbabenko/pre-commit-terraform.git
-  rev: v1.71.0
+  rev: v1.77.0
   hooks:
     - id: terraform_fmt
     - id: terraform_docs
