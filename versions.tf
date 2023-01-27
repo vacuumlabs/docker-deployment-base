@@ -6,6 +6,9 @@ terraform {
     aws = {
       source = "hashicorp/aws"
     }
+    cloudflare = {
+      source = "cloudflare/cloudflare"
+    }
     external = {
       source = "hashicorp/external"
     }
