@@ -1,20 +1,20 @@
-FROM quay.io/centos/centos:stream8
+FROM quay.io/centos/centos:stream9
 
-ARG awscli_v=2.9.15
-ARG awsvault_v=6.6.2
-ARG docker_v=20.10.22
-ARG terraform_v=1.3.7
+ARG awscli_v=2.11.21
+ARG awsvault_v=7.2.0
+ARG docker_v=24.0.1
+ARG terraform_v=1.4.6
 ARG terraformdocs_v=0.16.0
-ARG tflint_v=0.44.1
-ARG yq_v=4.30.8
+ARG tflint_v=0.46.1
+ARG yq_v=4.33.3
 
 ADD ansible_collection_requirements.yml plugins.tf tests.sh versions.tf ./
 
 RUN dnf -y update && \
-    dnf -y install glibc-langpack-en epel-release unzip curl bind-utils telnet bash-completion which sudo vim xz iputils && \
-    dnf -y install ansible-core python3-boto3 python3-pyvmomi python3-requests dnf-utils git wget jq && \
+    dnf -y install bash-completion bind-utils epel-release glibc-langpack-en iputils sudo telnet unzip vim which xz && \
+    dnf -y install ansible-core python3-boto3 python3-jmespath python3-pip python3-requests dnf-utils git wget jq && \
     dnf clean all && rm -rf /var/cache/dnf/* && \
-    pip3 install pre-commit mitogen
+    pip3 install mitogen pre-commit pyvmomi
 
 RUN curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${awscli_v}.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \

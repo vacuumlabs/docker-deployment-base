@@ -42,7 +42,7 @@ EOF
 cat > .pre-commit-config.yaml << EOF
 repos:
 - repo: https://github.com/antonbabenko/pre-commit-terraform.git
-  rev: v1.77.0
+  rev: v1.79.1
   hooks:
     - id: terraform_fmt
     - id: terraform_docs
