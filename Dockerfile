@@ -1,12 +1,12 @@
 FROM quay.io/centos/centos:stream9
 
-ARG awscli_v=2.11.21
+ARG awscli_v=2.12.5
 ARG awsvault_v=7.2.0
-ARG docker_v=24.0.1
-ARG terraform_v=1.4.6
+ARG docker_v=24.0.2
+ARG terraform_v=1.5.2
 ARG terraformdocs_v=0.16.0
-ARG tflint_v=0.46.1
-ARG yq_v=4.33.3
+ARG tflint_v=0.47.0
+ARG yq_v=4.34.1
 
 ADD ansible_collection_requirements.yml plugins.tf tests.sh versions.tf ./
 
