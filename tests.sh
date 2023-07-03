@@ -42,7 +42,7 @@ EOF
 cat > .pre-commit-config.yaml << EOF
 repos:
 - repo: https://github.com/antonbabenko/pre-commit-terraform.git
-  rev: v1.79.1
+  rev: v1.81.0
   hooks:
     - id: terraform_fmt
     - id: terraform_docs
@@ -51,7 +51,7 @@ EOF
 # pre-commit requires valid git repo. Recreate it in case it does not exist
 [[ -d .git ]] || git init
 pre-commit run
-tflint main.tf
+tflint --filter=main.tf
 terraform-docs markdown . > /dev/null
 terraform init
 terraform apply -auto-approve
