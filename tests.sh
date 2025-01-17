@@ -35,7 +35,7 @@ echo "*** pre-commit, tflint, terraform-docs ***"
 echo "***           and terraform            ***"
 echo "******************************************"
 cat > main.tf << EOF
-# tflint-ignore: terraform_required_providers
+# tflint-ignore: terraform_required_providers, terraform_required_version
 resource "null_resource" "test" {
 }
 EOF
